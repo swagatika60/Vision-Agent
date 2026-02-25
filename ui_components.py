@@ -168,4 +168,8 @@ html, body, .stApp {
 .warning-box {
     background: rgba(239, 68, 68, 0.1);
     border-color: rgba(239, 68, 68, 0.2);
-    border
+    border-left: 4px solid var(--warning);
+}
+
+</style>
+""", unsafe_allow_html=True)
