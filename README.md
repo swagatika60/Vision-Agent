@@ -25,32 +25,45 @@ To run Vision-Agent locally or on a fresh GitHub Codespace without any `libGL` s
 git clone [https://github.com/swagatika60/Vision-Agent.git](https://github.com/swagatika60/Vision-Agent.git)
 cd Vision-Agent
 
-# 2. Install required Linux system graphics drivers 
+# 2. Create your environment variables file and add placeholders
+cat <<EOF > .env
+GEMINI_API_KEY=your_gemini_api_key_here
+STREAM_API_KEY=your_stream_api_key_here
+STREAM_API_SECRET=your_stream_api_secret_here
+EOF
+
+# 3. Install required Linux system graphics drivers 
 # (This permanently fixes the libGL.so.1 OpenCV error on cloud servers/Codespaces)
 sudo apt-get update && sudo apt-get install -y libgl1 libglib2.0-0
 
-# 3. Create a fresh Python virtual environment
+# 4. Create a fresh Python virtual environment
 python3 -m venv venv
 
-# 4. Activate the virtual environment
+# 5. Activate the virtual environment
 # On macOS/Linux/GitHub Codespaces:
 source venv/bin/activate
 # On Windows (if running locally):
 # venv\Scripts\activate
 
-# 5. Upgrade pip to prevent any caching or installation bugs
+# 6. Upgrade pip to prevent any caching or installation bugs
 python -m pip install --upgrade pip
 
-# 6. Install all locked project dependencies from requirements.txt
+# 7. Install all locked project dependencies from requirements.txt
 pip install -r requirements.txt
 
-# 7. The "Bulletproof" Override: 
+# 8. The "Bulletproof" Override: 
 # Ensures the server-safe version of OpenCV is used, removing hidden conflicts.
 pip uninstall -y opencv-python opencv-contrib-python
 pip install opencv-python-headless --force-reinstall
 
-# 8. Run the application
-streamlit run visionmate.py
+# 9.Add Your Keys & Run
+# i).Open the .env file that was just created in your project folder.
 
----
+# ii).Replace your_gemini_api_key_here (and Stream keys) with your actual API keys.
 
+# iii).Launch the app:
+      streamlit run visionmate.py
+
+### Access the Application
+
+Open your browser and visit: **http://localhost:8501**
