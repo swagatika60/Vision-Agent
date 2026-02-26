@@ -8,7 +8,11 @@ gtts
 bcrypt
 pillow
 python-dotenv
-vision-agents
-nest-asyncio
 google-genai
-moondream
+nest-asyncio
+vision-agents
+vision-agents-plugins-getstream
+vision-agents-plugins-gemini
+vision-agents-plugins-ultralytics
+vision-agents-plugins-moondream
+vision-agents-plugins-smart-turn
