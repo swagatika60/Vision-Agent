@@ -22,11 +22,11 @@ To run Vision-Agent locally or on a fresh GitHub Codespace without any `libGL` s
 
 ```bash
 # 1. Clone the repository and enter the project directory
-git clone [https://github.com/swagatika60/Vision-Agent.git](https://github.com/swagatika60/Vision-Agent.git)
+git clone https://github.com/username/Vision-Agent.git
 cd Vision-Agent
 
 # 2. Create your environment variables file and add placeholders
-cat <<EOF > .env
+ touch .env
 GEMINI_API_KEY=your_gemini_api_key_here
 STREAM_API_KEY=your_stream_api_key_here
 STREAM_API_SECRET=your_stream_api_secret_here
