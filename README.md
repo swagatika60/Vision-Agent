@@ -63,8 +63,7 @@ pip install opencv-python-headless --force-reinstall
 
 # iii).Launch the app:
       streamlit run visionmate.py
-
-### Access the Application
 ```
+### Access the Application
 
 Open your browser and visit: **http://localhost:8501**
