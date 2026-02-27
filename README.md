@@ -75,8 +75,10 @@ python -m streamlit run visionmate.py
 **6. Access the App via Port 8501:**
 
 Running on your Local Computer: Open your web browser and go to http://localhost:8501
+-----
 
 **🔮 Future Roadmap & What's Next**
+
 I built the foundation of VisionMate during this hackathon, but I am highly committed to continuing its development into a real-world tool. My upcoming updates will include:
 
 Haptic Feedback Integration: Connecting the proximity alarm to Bluetooth wearables (like a smartwatch) to vibrate when a hazard is detected, providing silent alerts.
