@@ -25,7 +25,7 @@ load_dotenv()
 
 # Hackathon Agent Libraries
 from vision_agents.core import Agent, User
-from vision_agents.plugins import getstream, gemini, ultralytics as agent_ultralytics, moondream, smart_turn
+from vision_agents.plugins import getstream, gemini, ultralytics as agent_ultralytics
 
 # Legacy AI Libraries
 try:
@@ -119,10 +119,10 @@ def text_to_speech(text):
 @st.cache_resource
 def load_models():
     try:
-        yolo_model = YOLO('yolov8m.pt') # Upgraded to Medium for Hackathon accuracy
+        yolo_model = YOLO('yolov8n.pt') 
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-large")
-        blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-large").to(device)
+        blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+        blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
         return yolo_model, blip_processor, blip_model, device
     except Exception as e:
         st.error(f"Error loading models: {e}")
@@ -191,9 +191,9 @@ def auth_page():
     with tab2:
         st.subheader("✨ Register")
         with st.form("reg_form"):
-            nu, nn, np = st.text_input("Username"), st.text_input("Name"), st.text_input("Password", type="password")
+            nu, nn, np_pw = st.text_input("Username"), st.text_input("Name"), st.text_input("Password", type="password")
             if st.form_submit_button("📝 Create Account"):
-                success, msg = register_user(nu, nn, np)
+                success, msg = register_user(nu, nn, np_pw)
                 if success: st.success(msg)
                 else: st.error(msg)
 
@@ -237,7 +237,6 @@ def process_image_page():
             results = detect_objects(image_cv, st.session_state.yolo_model)
             annotated = draw_boxes(image_cv, results)
             
-            # Distance Alert
             close_items = []
             for box in results.boxes:
                 if (int(box.xyxy[0][3]) - int(box.xyxy[0][1])) / h_img > 0.5:
@@ -253,64 +252,139 @@ def process_image_page():
             st.markdown(VisionMateUI.info_card("AI Insights", desc, "success"), unsafe_allow_html=True)
             if st.session_state.audio_enabled and not close_items:
                 st.markdown(text_to_speech(desc), unsafe_allow_html=True)
+
+# FIXED: Stream Edge WebRTC Connection Protocol
 async def launch_hackathon_agent(user_name):
-    # Notice 'model' is changed to 'model_path'
-    yolo_processor = agent_ultralytics.YOLOPoseProcessor(model_path="yolov8n.pt")
+    yolo_processor = agent_ultralytics.YOLOPoseProcessor(model_path="yolov8n-pose.pt")
     
     agent = Agent(
         edge=getstream.Edge(),
-        agent_user=User(name="VisionMate", id="vision_agent"),
+        agent_user=User(name="VisionMate AI", id="vision_agent"),
         instructions=f"You are a mobility assistant for {user_name}. Warn of obstacles and describe the scene concisely.",
         llm=gemini.Realtime(), 
-        processors=[yolo_processor, moondream.MoondreamProcessor()], 
-        turn_detection=smart_turn.SmartTurn()
+        processors=[yolo_processor] 
     )
-    await agent.start()
+    
+    call_id = "visionmate-demo-room"
+    await agent.create_user()
+    call = await agent.create_call("default", call_id)
+    
+    async with agent.join(call):
+        await agent.finish()
+
 def process_live_page():
     VisionMateUI.load_css()
     VisionMateUI.page_header("Live Agent", "Ultra-Low Latency Call", "🎥")
     if st.button("⬅️ Home"): st.session_state.current_page = 'home'; st.rerun()
-    st.info("Initiating secure WebRTC connection via Stream Edge...")
-    if st.button("🚀 Launch Call", type="primary", use_container_width=True):
-        try: asyncio.run(launch_hackathon_agent(st.session_state.user_name))
-        except Exception as e: st.error(f"Error: {e}")
+    
+    st.markdown("---")
+    
+    call_id = "visionmate-demo-room"
+    webrtc_url = f"https://demo.visionagents.ai/join?call_id={call_id}"
+    
+    st.markdown(f"""
+    ### 🔗 Step 1: Open Your Camera
+    Streamlit cannot process 30ms live video natively. You must use the secure Edge Network UI.
+    **[CLICK HERE TO OPEN YOUR CAMERA IN A NEW TAB]({webrtc_url})**
+    """)
+    
+    st.markdown("### 🤖 Step 2: Boot the AI")
+    st.info("After opening the link above, click the button below to send your AI Agent into the room with you!")
+    
+    if st.button("🚀 Boot AI Agent into Room", type="primary", use_container_width=True):
+        with st.spinner("Agent is active in the room! (Keep this tab open)"):
+            try: 
+                asyncio.run(launch_hackathon_agent(st.session_state.user_name))
+            except Exception as e: 
+                st.error(f"Error: {e}")
 
+# FIXED: High-Speed Tracking and JSON Export
 def process_video_page():
     VisionMateUI.load_css()
-    VisionMateUI.page_header("Video Analysis", "Spatial Intelligence", "🎬")
+    VisionMateUI.page_header("Video Analysis", "High-Speed Hazard Detection", "🎬")
     if st.button("⬅️ Home"): st.session_state.current_page = 'home'; st.rerun()
     
-    uploaded_video = st.file_uploader("Upload Video", type=['mp4'])
+    uploaded_video = st.file_uploader("Upload Environment Video", type=['mp4'])
     if uploaded_video:
         tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
         tfile.write(uploaded_video.read()); video_path = tfile.name
         st.video(video_path)
         
-        if st.button("🎬 Run AI Analysis", type="primary", use_container_width=True):
+        if st.button("🚨 Run Fast Scan", type="primary", use_container_width=True):
             cap = cv2.VideoCapture(video_path)
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             frame_window = st.empty()
             progress = st.progress(0)
-            logs = []
             
+            danger_objects = set()
+            safe_objects = set()
             count = 0
+            
+            # FRAME SKIPPING FOR SPEED: Analyze 1, Skip 4
+            skip_frames = 5 
+            
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret: break
-                if count % 10 == 0:
-                    results = st.session_state.yolo_model(frame, verbose=False)[0]
-                    frame_window.image(cv2.cvtColor(draw_boxes(frame, results), cv2.COLOR_BGR2RGB), use_container_width=True)
-                    for b in results.boxes: logs.append(results.names[int(b.cls[0])])
+                
+                # Only process every 5th frame to make it extremely fast!
+                if count % skip_frames == 0:
+                    h_img = frame.shape[0]
+                    
+                    # High Confidence + Specific Classes (People, Bikes, Cars, Buses)
+                    results = st.session_state.yolo_model.track(
+                        frame, persist=True, verbose=False, conf=0.5, classes=[0, 1, 2, 3, 5, 7]
+                    )[0]
+                    
+                    annotated = frame.copy()
+                    
+                    if results.boxes.id is not None:
+                        for box in results.boxes:
+                            cls = int(box.cls[0])
+                            name = results.names[cls]
+                            
+                            x1, y1, x2, y2 = map(int, box.xyxy[0])
+                            box_height = (y2 - y1) / h_img
+                            
+                            if box_height > 0.4:
+                                danger_objects.add(name)
+                                cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 0, 255), 4)
+                                cv2.putText(annotated, f"HAZARD: {name}", (x1, y1 - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 3)
+                            else:
+                                safe_objects.add(name)
+                                cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                                cv2.putText(annotated, name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                            
+                    # Update UI
+                    frame_window.image(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB), use_container_width=True)
+                    progress.progress(min(count/total_frames, 1.0))
+                
                 count += 1
-                progress.progress(min(count/total_frames, 1.0))
+                
             cap.release()
+            progress.empty()
             
-            unique_counts = {x: logs.count(x) for x in set(logs)}
-            summary = "Analysis Complete: " + ", ".join([f"{v} {k}s" for k, v in unique_counts.items()])
-            st.markdown(VisionMateUI.info_card("Report", summary, "success"), unsafe_allow_html=True)
+            if danger_objects:
+                summary = f"CRITICAL WARNING! The following objects came dangerously close: {', '.join(danger_objects)}."
+                st.markdown(VisionMateUI.info_card("🚨 Hazard Report", summary, "warning"), unsafe_allow_html=True)
+            elif safe_objects:
+                summary = f"Path clear. Detected objects kept a safe distance: {', '.join(safe_objects)}."
+                st.markdown(VisionMateUI.info_card("✅ Safe Report", summary, "success"), unsafe_allow_html=True)
+            else:
+                summary = "No relevant vehicles or pedestrians detected in the path."
+                st.markdown(VisionMateUI.info_card("ℹ️ Scan Complete", summary, "info"), unsafe_allow_html=True)
             
-            # Hackathon Export
-            st.download_button("📥 Export JSON Report", data=json.dumps(unique_counts), file_name="report.json", mime="application/json")
+            if st.session_state.audio_enabled:
+                st.markdown(text_to_speech(summary), unsafe_allow_html=True)
+
+            # JSON Export Fix
+            report_data = {
+                "mission_status": "DANGER" if danger_objects else "SAFE",
+                "imminent_hazards_detected": list(danger_objects),
+                "safe_distance_objects": list(safe_objects),
+                "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            st.download_button("📥 Export Hazard Report", data=json.dumps(report_data, indent=4), file_name="hazard_report.json", mime="application/json")
 
 # ============== MAIN APP ==============
 
@@ -339,9 +413,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-   
