@@ -162,7 +162,7 @@ def auth_page():
     VisionMateUI.welcome_banner()
     tab1, tab2 = VisionMateUI.auth_tabs()
     with tab1:
-        st.subheader("🔐 Login")
+        st.subheader(" Login")
         with st.form("login_form"):
             u = st.text_input("Username")
             p = st.text_input("Password", type="password")
@@ -173,7 +173,7 @@ def auth_page():
                     st.rerun()
                 else: st.error(msg)
     with tab2:
-        st.subheader("✨ Register")
+        st.subheader(" Register")
         with st.form("reg_form"):
             nu, nn, np_pw = st.text_input("Username"), st.text_input("Name"), st.text_input("Password", type="password")
             if st.form_submit_button("📝 Create Account"):
@@ -214,7 +214,7 @@ def process_image_page():
         with col_img2:
             st.image(image, use_container_width=True)
         
-        if st.button("🔍 Run High-Accuracy Analysis", type="primary", use_container_width=True):
+        if st.button(" Run High-Accuracy Analysis", type="primary", use_container_width=True):
             image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
             # Resize smartly for speed but keep exact proportions
             image_cv = resize_keep_aspect(image_cv, max_width=800)
@@ -521,3 +521,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
