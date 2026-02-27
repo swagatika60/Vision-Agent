@@ -25,7 +25,7 @@ load_dotenv()
 
 # Hackathon Agent Libraries
 from vision_agents.core import Agent, User
-from vision_agents.plugins import getstream, gemini, ultralytics as agent_ultralytics, smart_turn
+from vision_agents.plugins import getstream, gemini, ultralytics as agent_ultralytics, moondream, smart_turn
 
 # Legacy AI Libraries
 try:
@@ -119,10 +119,10 @@ def text_to_speech(text):
 @st.cache_resource
 def load_models():
     try:
-        yolo_model = YOLO('yolov8n.pt') # Using Nano so Codespaces doesn't crash
+        yolo_model = YOLO('yolov8m.pt') # Upgraded to Medium for Hackathon accuracy
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-        blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
+        blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-large")
+        blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-large").to(device)
         return yolo_model, blip_processor, blip_model, device
     except Exception as e:
         st.error(f"Error loading models: {e}")
@@ -191,9 +191,9 @@ def auth_page():
     with tab2:
         st.subheader("✨ Register")
         with st.form("reg_form"):
-            nu, nn, np_pw = st.text_input("Username"), st.text_input("Name"), st.text_input("Password", type="password")
+            nu, nn, np = st.text_input("Username"), st.text_input("Name"), st.text_input("Password", type="password")
             if st.form_submit_button("📝 Create Account"):
-                success, msg = register_user(nu, nn, np_pw)
+                success, msg = register_user(nu, nn, np)
                 if success: st.success(msg)
                 else: st.error(msg)
 
@@ -243,36 +243,29 @@ def process_image_page():
                 if (int(box.xyxy[0][3]) - int(box.xyxy[0][1])) / h_img > 0.5:
                     close_items.append(results.names[int(box.cls[0])])
             
+            if close_items:
+                alert = f"⚠️ WARNING: {', '.join(set(close_items))} is very close!"
+                st.error(alert)
+                if st.session_state.audio_enabled: st.markdown(text_to_speech(alert), unsafe_allow_html=True)
+            
             VisionMateUI.image_comparison(image, cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB), "Original", "Analysis")
             desc = f"I see {create_detection_description(results)}. {generate_caption(image, st.session_state.blip_processor, st.session_state.blip_model, st.session_state.device)}"
-            
-            # ADDED: Voice plays automatically for everything now!
-            if close_items:
-                alert = f"WARNING! {', '.join(set(close_items))} is very close!"
-                st.error(f"⚠️ {alert}")
-                full_speech = f"{alert} {desc}"
-            else:
-                full_speech = desc
-                
-            st.markdown(VisionMateUI.info_card("AI Insights", full_speech, "success"), unsafe_allow_html=True)
-            
-            if st.session_state.audio_enabled:
-                st.markdown(text_to_speech(full_speech), unsafe_allow_html=True)
-
+            st.markdown(VisionMateUI.info_card("AI Insights", desc, "success"), unsafe_allow_html=True)
+            if st.session_state.audio_enabled and not close_items:
+                st.markdown(text_to_speech(desc), unsafe_allow_html=True)
 async def launch_hackathon_agent(user_name):
-    # FIXED: Using YOLOPoseProcessor to prevent crash and removed buggy Moondream plugin
-    yolo_processor = agent_ultralytics.YOLOPoseProcessor(model_path="yolov8n-pose.pt")
+    # Notice 'model' is changed to 'model_path'
+    yolo_processor = agent_ultralytics.YOLOPoseProcessor(model_path="yolov8n.pt")
     
     agent = Agent(
         edge=getstream.Edge(),
         agent_user=User(name="VisionMate", id="vision_agent"),
         instructions=f"You are a mobility assistant for {user_name}. Warn of obstacles and describe the scene concisely.",
         llm=gemini.Realtime(), 
-        processors=[yolo_processor], 
+        processors=[yolo_processor, moondream.MoondreamProcessor()], 
         turn_detection=smart_turn.SmartTurn()
     )
     await agent.start()
-
 def process_live_page():
     VisionMateUI.load_css()
     VisionMateUI.page_header("Live Agent", "Ultra-Low Latency Call", "🎥")
@@ -284,7 +277,7 @@ def process_live_page():
 
 def process_video_page():
     VisionMateUI.load_css()
-    VisionMateUI.page_header("Video Analysis", "Tracking Intelligence", "🎬")
+    VisionMateUI.page_header("Video Analysis", "Spatial Intelligence", "🎬")
     if st.button("⬅️ Home"): st.session_state.current_page = 'home'; st.rerun()
     
     uploaded_video = st.file_uploader("Upload Video", type=['mp4'])
@@ -293,40 +286,62 @@ def process_video_page():
         tfile.write(uploaded_video.read()); video_path = tfile.name
         st.video(video_path)
         
-        if st.button("🎬 Run AI Tracking", type="primary", use_container_width=True):
+        if st.button("🎬 Run AI Analysis", type="primary", use_container_width=True):
             cap = cv2.VideoCapture(video_path)
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             frame_window = st.empty()
             progress = st.progress(0)
+            logs = []
             
-            # FIXED: Tracking Logic to prevent overcounting!
-            unique_ids_set = set()
-            final_counts = {}
             count = 0
-            
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret: break
-                
-                # Use YOLO tracker instead of raw detection
-                results = st.session_state.yolo_model.track(frame, persist=True, verbose=False)[0]
-                frame_window.image(cv2.cvtColor(results.plot(), cv2.COLOR_BGR2RGB), use_container_width=True)
-                
-                if results.boxes.id is not None:
-                    ids = results.boxes.id.int().cpu().tolist()
-                    cls_ids = results.boxes.cls.int().cpu().tolist()
-                    for obj_id, cls_id in zip(ids, cls_ids):
-                        if obj_id not in unique_ids_set:
-                            unique_ids_set.add(obj_id)
-                            name = results.names[cls_id]
-                            final_counts[name] = final_counts.get(name, 0) + 1
-                            
+                if count % 10 == 0:
+                    results = st.session_state.yolo_model(frame, verbose=False)[0]
+                    frame_window.image(cv2.cvtColor(draw_boxes(frame, results), cv2.COLOR_BGR2RGB), use_container_width=True)
+                    for b in results.boxes: logs.append(results.names[int(b.cls[0])])
                 count += 1
-                if count % 5 == 0:
-                    progress.progress(min(count/total_frames, 1.0))
-            
+                progress.progress(min(count/total_frames, 1.0))
             cap.release()
-            progress.empty()
             
-            # Create exact count summary
-            summary
+            unique_counts = {x: logs.count(x) for x in set(logs)}
+            summary = "Analysis Complete: " + ", ".join([f"{v} {k}s" for k, v in unique_counts.items()])
+            st.markdown(VisionMateUI.info_card("Report", summary, "success"), unsafe_allow_html=True)
+            
+            # Hackathon Export
+            st.download_button("📥 Export JSON Report", data=json.dumps(unique_counts), file_name="report.json", mime="application/json")
+
+# ============== MAIN APP ==============
+
+def main():
+    st.set_page_config(page_title="VisionMate Hackathon", layout="wide")
+    if not st.session_state.authenticated:
+        auth_page()
+    else:
+        with st.sidebar:
+            VisionMateUI.sidebar_header(st.session_state.user_name)
+            st.session_state.audio_enabled = st.checkbox("🔊 Audio Feedback", value=True)
+            if st.button("🏠 Home"): st.session_state.current_page = 'home'; st.rerun()
+            if st.button("🚪 Logout"): 
+                st.session_state.authenticated = False; st.rerun()
+
+        if not st.session_state.models_loaded:
+            with st.spinner("🤖 Loading AI Brain..."):
+                yolo, b_p, b_m, dev = load_models()
+                st.session_state.yolo_model, st.session_state.blip_processor, st.session_state.blip_model, st.session_state.device = yolo, b_p, b_m, dev
+                st.session_state.models_loaded = True
+        
+        if st.session_state.current_page == 'home': home_page()
+        elif st.session_state.current_page == 'image': process_image_page()
+        elif st.session_state.current_page == 'live': process_live_page()
+        elif st.session_state.current_page == 'video': process_video_page()
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+   
