@@ -162,21 +162,21 @@ def auth_page():
     VisionMateUI.welcome_banner()
     tab1, tab2 = VisionMateUI.auth_tabs()
     with tab1:
-        st.subheader("🔐 Login")
+        st.subheader(" Login")
         with st.form("login_form"):
             u = st.text_input("Username")
             p = st.text_input("Password", type="password")
-            if st.form_submit_button("🚀 Login", type="primary"):
+            if st.form_submit_button(" Login", type="primary"):
                 success, msg, name = login_user(u, p)
                 if success:
                     st.session_state.authenticated, st.session_state.username, st.session_state.user_name = True, u, name
                     st.rerun()
                 else: st.error(msg)
     with tab2:
-        st.subheader("✨ Register")
+        st.subheader(" Register")
         with st.form("reg_form"):
             nu, nn, np_pw = st.text_input("Username"), st.text_input("Name"), st.text_input("Password", type="password")
-            if st.form_submit_button("📝 Create Account"):
+            if st.form_submit_button(" Create Account"):
                 success, msg = register_user(nu, nn, np_pw)
                 if success: st.success(msg)
                 else: st.error(msg)
@@ -214,7 +214,7 @@ def process_image_page():
         with col_img2:
             st.image(image, use_container_width=True)
         
-        if st.button("🔍 Run High-Accuracy Analysis", type="primary", use_container_width=True):
+        if st.button(" Run High-Accuracy Analysis", type="primary", use_container_width=True):
             image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
             # Resize smartly for speed but keep exact proportions
             image_cv = resize_keep_aspect(image_cv, max_width=800)
@@ -309,7 +309,7 @@ def process_live_page():
     webrtc_url = f"https://demo.visionagents.ai/join?call_id={call_id}"
     st.markdown(f"**[🔗 CLICK HERE TO OPEN AGENT ROOM]({webrtc_url})**")
     
-    if st.button("🚀 Boot AI Agent into Room"):
+    if st.button(" Boot AI Agent into Room"):
         with st.spinner("Agent is active in the room!"):
             try: 
                 asyncio.run(launch_hackathon_agent(st.session_state.user_name))
@@ -356,7 +356,7 @@ def process_video_page():
             
         st.markdown("---")
         
-        if st.button("🚨 Start Live Tracking Scan", type="primary", use_container_width=True):
+        if st.button(" Start Live Tracking Scan", type="primary", use_container_width=True):
             cap = cv2.VideoCapture(video_path)
             progress_bar = st.progress(0)
             status_text = st.empty()
@@ -371,7 +371,7 @@ def process_video_page():
                 
             # Right side: Live updating metrics and timeline
             with col_telemetry:
-                st.markdown("### 📡 Live Telemetry")
+                st.markdown("###  Live Telemetry")
                 metric_window = st.empty()
                 timeline_window = st.empty()
             
@@ -504,7 +504,7 @@ def main():
                 st.session_state.authenticated = False; st.rerun()
 
         if not st.session_state.models_loaded:
-            with st.spinner("🤖 Upgrading AI Brain to High-Accuracy Model..."):
+            with st.spinner(" Upgrading AI Brain to High-Accuracy Model..."):
                 yolo = load_models()
                 st.session_state.yolo_model = yolo
                 st.session_state.models_loaded = True
@@ -516,3 +516,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
