@@ -317,11 +317,11 @@ def process_live_page():
                 st.error(f"Error: {e}")
 
 # ==========================================
-# HIGH ACCURACY VIDEO DASHBOARD 
+# SYNCHRONOUS LIVE VIDEO DASHBOARD 
 # ==========================================
 def process_video_page():
     VisionMateUI.load_css()
-    VisionMateUI.page_header("Video Analysis", "Real-Time Hazard & Object Timeline", "🎬")
+    VisionMateUI.page_header("Video Analysis", "Real-Time Hazard Dashboard", "🎬")
     
     if st.button("⬅️ Back to Home"): 
         st.session_state.current_page = 'home'
@@ -342,7 +342,7 @@ def process_video_page():
         cap = cv2.VideoCapture(video_path)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = int(cap.get(cv2.CAP_PROP_FPS))
-        duration = total_frames / fps if fps > 0 else 0
+        duration = total_frames / max(fps, 1)
         cap.release()
         
         st.markdown("<br>", unsafe_allow_html=True) 
@@ -356,16 +356,24 @@ def process_video_page():
             
         st.markdown("---")
         
-        if st.button("🚨 Start High-Accuracy Scan", type="primary", use_container_width=True):
+        if st.button("🚨 Start Live Tracking Scan", type="primary", use_container_width=True):
             cap = cv2.VideoCapture(video_path)
             progress_bar = st.progress(0)
             status_text = st.empty()
             
-            col_scan1, col_scan2, col_scan3 = st.columns([1, 2, 1])
-            with col_scan2:
-                frame_window = st.empty()
+            # --- THE LIVE SYNCHRONOUS LAYOUT ---
+            col_stream, col_telemetry = st.columns([2, 1])
             
-            metrics_window = st.empty()
+            # Left side: Video Stream
+            with col_stream:
+                frame_window = st.empty()
+                hud_disp = st.empty()
+                
+            # Right side: Live updating metrics and timeline
+            with col_telemetry:
+                st.markdown("### 📡 Live Telemetry")
+                metric_window = st.empty()
+                timeline_window = st.empty()
             
             danger_objects = set()
             safe_objects = set()
@@ -376,7 +384,7 @@ def process_video_page():
             # Process ~5 frames per second. Smooth enough for video, light enough for Cloud RAM.
             skip_frames = max(1, fps // 5) 
             
-            status_text.info("🎬 Starting Deep Vision Analysis...")
+            status_text.info("🎬 Executing Deep Vision Analysis...")
             
             while cap.isOpened():
                 ret, frame = cap.read()
@@ -415,7 +423,7 @@ def process_video_page():
                                 cv2.putText(annotated, name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                     
                     if current_frame_counts:
-                        timestamp = count / fps
+                        timestamp = count / max(fps, 1)
                         detection_timeline.append({
                             'timestamp': timestamp,
                             'objects': current_frame_counts
@@ -428,8 +436,23 @@ def process_video_page():
                     cv2.rectangle(annotated, (0, 0), (annotated.shape[1], hud_height), (0, 0, 0), -1)
                     cv2.putText(annotated, f"LIVE COUNT: {count_text}", (10, int(hud_height * 0.7)), cv2.FONT_HERSHEY_SIMPLEX, h_img * 0.03, (255, 255, 255), max(1, int(h_img * 0.003)))
                     
+                    # 1. LIVE UPDATE: Video Player
                     frame_window.image(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB), use_container_width=True)
-                    metrics_window.markdown(f"**<div align='center'>Current Frame Intel: {count_text}</div>**", unsafe_allow_html=True)
+                    hud_disp.markdown(f"**<div align='center'>Current Frame Intel: {count_text}</div>**", unsafe_allow_html=True)
+                    
+                    # 2. LIVE UPDATE: Data Metrics
+                    with metric_window.container():
+                        m1, m2 = st.columns(2)
+                        m1.metric("Unique Classes", len(all_detected_types))
+                        m2.metric("Total Hazards", len(danger_objects))
+                        
+                    # 3. LIVE UPDATE: Scrolling Timeline (Show last 6 entries to fit the screen)
+                    log_txt = "#### Time-Series Log\n"
+                    for t in reversed(detection_timeline[-6:]): 
+                        ts = f"{int(t['timestamp']//60):02d}:{int(t['timestamp']%60):02d}"
+                        obj = ", ".join([f"{c} {n}" for n, c in t['objects'].items()])
+                        log_txt += f"🔴 **{ts}** - {obj}\n\n"
+                    timeline_window.markdown(log_txt)
                     
                 count += 1
                 progress = min(count / total_frames, 1.0)
@@ -439,37 +462,9 @@ def process_video_page():
             cap.release()
             progress_bar.progress(1.0)
             status_text.success("✅ Deep Vision Analysis complete!")
-            metrics_window.empty()
             
-            # ==========================================
-            # FINAL DASHBOARD RESULTS
-            # ==========================================
+            # FINAL WARNING OUTPUT
             st.markdown("---")
-            st.markdown("### 📊 Video Analysis Results")
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Total Object Types", len(all_detected_types))
-            with col2:
-                st.metric("Detection Points", len(detection_timeline))
-            with col3:
-                st.metric("Imminent Hazards", len(danger_objects))
-                
-            if all_detected_types:
-                st.markdown("### 🎯 Objects Found in Video")
-                st.write(", ".join(list(all_detected_types)))
-                
-                st.markdown("### ⏱️ Detection Timeline")
-                timeline_text = ""
-                for detection in detection_timeline[:15]: 
-                    timestamp_str = f"{int(detection['timestamp']//60):02d}:{int(detection['timestamp']%60):02d}"
-                    objects_str = ", ".join([f"{c} {n}" for n, c in detection['objects'].items()])
-                    timeline_text += f"**{timestamp_str}** - {objects_str}\n\n"
-                
-                if len(detection_timeline) > 15:
-                    timeline_text += f"*... and {len(detection_timeline) - 15} more detection points analyzed in the background*"
-                st.markdown(timeline_text)
-
             if danger_objects:
                 summary = f"CRITICAL WARNING! Imminent collision risk detected from: {', '.join(danger_objects)}."
                 st.markdown(VisionMateUI.info_card("🚨 Hazard Report", summary, "warning"), unsafe_allow_html=True)
