@@ -7,6 +7,7 @@ torchvision
 gtts
 bcrypt
 pillow
+lapx
 python-dotenv
 google-genai
 nest-asyncio
