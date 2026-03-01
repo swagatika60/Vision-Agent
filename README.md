@@ -10,51 +10,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
-graph TD
-    %% Define User Input
-    User[👤 Cyclist / User] -->|1. WebRTC Stream| Vision
-
-    %% Primary Vision Pipeline
-    subgraph VisionPipeline ["Core Spatial Vision Engine"]
-        direction LR
-        Vision[🧩 Ultralytics YOLOv8s]
-        Scaler[📐 Aspect Scaler]
-        Math[📐 Proximity Math (40% Rule)]
-
-        Vision --> Scaler
-        Scaler --> Math
-    end
-
-    %% Agent Reasoning and Voice output
-    subgraph AgentReasoning ["Multimodal Reasoning Engine"]
-        Agent[🗣️ Gemini Realtime LLM]
-        Voice[🔊 gTTS Voice Generator]
-
-        Agent -->|2. Generate Warning| Voice
-    end
-
-    %% Flow connections
-    Math -->|If HAZARD| Agent
-    Voice -->|3. Audio Alert: 'HAZARD!'| User
-
-    %% Network Optimization block
-    Network[⚡ Stream Edge WebRTC] -. Optimizes Pipeline .-> VisionPipeline
-
-    %% Final output and reporting
-    Math -->|Log Data| Telemetry[🎬 Live Telemetry HUD]
-    User -.->|Upload Video| Telemetry
-    Telemetry -->|Export| Audit[📊 JSON Security Audit]
-
-    %% Apply professional colors
-    classDef input fill:#e1f5fe,stroke:#01579b,stroke-width:1px,stroke-dasharray: 5 5;
-    classDef vision fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
-    classDef reasoning fill:#fff3e0,stroke:#e65100,stroke-width:1px;
-    classDef network fill:#fce4ec,stroke:#880e4f,stroke-width:1px,stroke-dasharray: 3 3;
-
-    class User,Audit input;
-    class VisionPipeline,Telemetry vision;
-    class AgentReasoning reasoning;
-    class Network network;
 
 ## 🎬 Video Demo (Click to Play)
 
