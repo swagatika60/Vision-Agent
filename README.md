@@ -1,7 +1,7 @@
 # 👁️ VisionMate: Spatial Agent Protocol
 
 <p align="center">
-  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/565x2q6hq9vfb4kjpzge.png" alt="VisionMate Banner" width="800">
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/b82pyn7by1b3jwcn0ifl.jpeg" alt="VisionMate Banner" width="800">
 </p>
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://vision-agent.streamlit.app/)
