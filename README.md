@@ -9,17 +9,25 @@
 [![Vision Agents](https://img.shields.io/badge/Powered%20By-Vision%20Agents-orange.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+---
+
 ## 🎬 Video Demo (Click to Play)
-[![VisionMate Demo](https://img.youtube.com/vi/Y04gNrPA3kk/0.jpg)](https://www.youtube.com/watch?v=Y04gNrPA3kk)
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=Y04gNrPA3kk">
+    <img src="https://img.youtube.com/vi/Y04gNrPA3kk/0.jpg" alt="VisionMate Demo" width="600">
+  </a>
+</p>
 
 ---
-🎬 **[WATCH THE VIDEO DEMO](https://youtube.com/watch?v=Y04gNrPA3kk)** **VisionMate AI** is a multi-modal, real-time spatial awareness agent. Developed for the *Vision Possible: Agent Protocol* hackathon, it transforms standard camera feeds into **active telemetry dashboards** that mathematically calculate imminent spatial hazards.
+
+**VisionMate AI** is a multi-modal, real-time spatial awareness agent developed for the *Vision Possible: Agent Protocol* hackathon. It transforms standard camera feeds into **active telemetry dashboards** that mathematically calculate imminent spatial hazards.
 
 Unlike passive object detectors, VisionMate evaluates physical proximity in real-time to provide life-saving alerts—all while optimized for lightweight cloud infrastructure (1GB RAM).
 
 ---
 
-## 🚀 The Engineering Challenge:
+## 🚀 The Engineering Challenge
 
 Processing heavy computer vision (YOLO) on cloud servers typically results in **Out of Memory (OOM) crashes** or distorted detection accuracy. Furthermore, an AI agent needs to distinguish between a car that is "visible" and a car that is "imminent danger."
 
@@ -57,16 +65,18 @@ Processing heavy computer vision (YOLO) on cloud servers typically results in **
 
 VisionMate runs an optimized tracking loop that calculates spatial threat using the vertical span of the object relative to the frame height.
 
-
-
 **The Calculation:**
 $$vertical\_span = \frac{y2 - y1}{h\_img}$$
 
-* **Hazard (>0.4):** Imminent collision risk. Triggers voice alert and red HUD.
-* **Warning (>0.2):** Proximity warning. Yellow HUD.
-* **Safe (<0.2):** Distant object. Green HUD.
+* **🔴 Hazard (>0.4):** Imminent collision risk. Triggers voice alert and red HUD.
+* **🟡 Warning (>0.2):** Proximity warning. Yellow HUD.
+* **🟢 Safe (<0.2):** Distant object. Green HUD.
 
 ---
+
+## 💻 Local Installation & Setup
+
+If you wish to run VisionMate locally or in a Codespace, follow these steps:
 
 
 ## 💻 Local Installation & Setup
