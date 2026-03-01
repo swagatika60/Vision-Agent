@@ -9,7 +9,10 @@
 [![Vision Agents](https://img.shields.io/badge/Powered%20By-Vision%20Agents-orange.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-{% youtube Y04gNrPA3kk %}
+## 🎬 Video Demo (Click to Play)
+[![VisionMate Demo](https://img.youtube.com/vi/Y04gNrPA3kk/0.jpg)](https://www.youtube.com/watch?v=Y04gNrPA3kk)
+
+---
 🎬 **[WATCH THE VIDEO DEMO](https://youtube.com/watch?v=Y04gNrPA3kk)** **VisionMate AI** is a multi-modal, real-time spatial awareness agent. Developed for the *Vision Possible: Agent Protocol* hackathon, it transforms standard camera feeds into **active telemetry dashboards** that mathematically calculate imminent spatial hazards.
 
 Unlike passive object detectors, VisionMate evaluates physical proximity in real-time to provide life-saving alerts—all while optimized for lightweight cloud infrastructure (1GB RAM).
