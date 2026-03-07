@@ -1,8 +1,13 @@
 streamlit
+opencv-python-headless
 gtts
 bcrypt
 Pillow
 python-dotenv
 nest-asyncio
 getstream
-vision-agents[getstream,gemini,ultralytics]
+ultralytics
+vision-agents
+vision-agents-plugins-getstream
+vision-agents-plugins-gemini
+vision-agents-plugins-ultralytics
