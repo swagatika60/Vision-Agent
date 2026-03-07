@@ -11,6 +11,7 @@ lapx
 python-dotenv
 google-genai
 nest-asyncio
+getstream[webrtc]
 vision-agents
 vision-agents-plugins-getstream
 vision-agents-plugins-gemini
