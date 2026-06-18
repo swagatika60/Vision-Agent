@@ -10,6 +10,7 @@ from io import BytesIO
 import tempfile
 import time
 from datetime import datetime
+import nest_asyncio
 import asyncio
 import nest_asyncio
 from dotenv import load_dotenv
